@@ -2,9 +2,7 @@
 
 function Header(){
     return (
-    
-        <h3>Green Plant</h3>
-        
+        <div className="logo"><h3>Green Plant</h3></div>
     )
 }
 
