@@ -1,90 +1,91 @@
-import React, { useState } from "react";
-import ShoppingButtons from "./ShoppingButtons";
-import Header from "./Header";
+import React, { useState } from 'react';
 
 function ShoppingPage() {
-    const [totalPrice, setTotalPrice] = useState(0);
-    //assume user has loyal card
-    const [loyalCard, setLoyalCard] = useState(true);
-    //promo code discount
-    const [code, setCode] = useState("BUY1GET1FREE");
-    const [itemQuantities, setItemQuantities] = useState({
-        peaceLily: 0,
-        peachFlamingoFlower: 0,
-        ebonyFlamingoFlower: 0,
-    });
+    const [basket, setBasket] = useState([]);
+    const availableItems = [
+        { id: 1, name: 'Peace Lily', price: 14.99 },
+        { id: 2, name: 'Peach Flamingo Flower', price: 28.00 },
+        { id: 3, name: 'Ebony Flamingo Flower', price: 14.99 }
+    ];
 
-
-    const itemPrices = {
-        peaceLily: 14.99,
-        peachFlamingoFlower: 28,
-        ebonyFlamingoFlower: 14.99,
+    const addItemToBasket = (itemId) => {
+        setBasket((prevBasket) => {
+            const item = availableItems.find((item) => item.id === itemId);
+            if (item) {
+                const newBasket = [...prevBasket, item];
+                applyDiscounts(newBasket); // Apply discounts to the updated basket.
+                return newBasket;
+            }
+            return prevBasket;
+        });
     };
 
+    const removeItemFromBasket = (itemId) => {
+        setBasket((prevBasket) => {
+            const updatedBasket = prevBasket.filter((item) => item.id !== itemId);
+            applyDiscounts(updatedBasket); // Apply discounts to the updated basket.
+            return updatedBasket;
+        });
+    };
 
-    const updateTotalPrice = () => {
-        let subTotal = 0;
-        for (const item in itemPrices) {
-            subTotal += itemPrices[item] * itemQuantities[item];
+    const applyDiscounts = (basket) => {
+        const discountedBasket = basket.map((item) => {
+            if (basket.filter((i) => i.id === item.id).length > 1) {
+                return { ...item, price: 0 };
+            }
+            return item;
+        });
+
+        // 10% off on totals greater than £20
+        const totalPrice = discountedBasket.reduce((total, item) => total + item.price, 0);
+        let discountedTotal = totalPrice;
+        if (totalPrice > 20) {
+            discountedTotal = totalPrice * 0.9;
+            discountedBasket.forEach((item) => {
+                item.price = (item.price / totalPrice) * discountedTotal;
+            });
         }
+    };
 
-        //loyal card discount 2%
-        if (loyalCard) {
-        subTotal *= 0.98; 
-        }
+    const calculateTotalPrice = (basket) => {
+        applyDiscounts(basket); 
+        return basket.reduce((total, item) => total + item.price, 0);
+    };
 
-    setTotalPrice(subTotal);
+    const emptyBasket = () => {
+        setBasket([]);
     };
 
     return (
         <>
-        <Header />
-        <div>
-            Peace Lily £{itemPrices.peaceLily}
-            <ShoppingButtons
-            itemName="peaceLily"
-            itemQuantity={itemQuantities.peaceLily}
-            updateTotalPrice={updateTotalPrice}
-            setItemQuantity={(quantity) =>{
-                setItemQuantities({ ...itemQuantities, peaceLily: quantity });
-                updateTotalPrice();
-            }
-            }
-            />
-        </div>
-        <div>
-            Peach Flamingo Flower £{itemPrices.peachFlamingoFlower}
-            <ShoppingButtons
-            itemName="peachFlamingoFlower"
-            itemQuantity={itemQuantities.peachFlamingoFlower}
-            updateTotalPrice={updateTotalPrice}
-            setItemQuantity={(quantity) =>{
-                setItemQuantities({ ...itemQuantities, peachFlamingoFlower: quantity })
-                updateTotalPrice();
-            }
-            }
-            />
-        </div>
-        <div>
-            Ebony Flamingo Flower £{itemPrices.ebonyFlamingoFlower}
-            <ShoppingButtons
-            itemName="ebonyFlamingoFlower"
-            itemQuantity={itemQuantities.ebonyFlamingoFlower}
-            updateTotalPrice={updateTotalPrice}
-            setItemQuantity={(quantity) =>{
-                setItemQuantities({ ...itemQuantities, ebonyFlamingoFlower: quantity })
-                updateTotalPrice();
-            }
-            }
-            />
-        </div>
-        <div><input></input><button>APPLY</button></div>
-        <p>try: BUY1GET1FREE</p>
+            <h3>GREEN PLANT</h3>
+            <div>
+                {availableItems.map((item) => (
+                    <div key={item.id}>
+                        {item.name} - £{item.price.toFixed(2)}
+                        <button onClick={() => addItemToBasket(item.id)}>Add</button>
+                        <button onClick={() => removeItemFromBasket(item.id)}>Remove</button>
+                    </div>
+                ))}
+            </div>
 
-        <div>YOUR ORDER: </div>
-        <div>Total £{totalPrice.toFixed(2)}</div>
+            <div>
+                <h3>Your Basket</h3>
+                <ul id="basket-list">
+                    {basket.map((item) => (
+                        <li key={item.id}>
+                            {item.name} - £{item.price.toFixed(2)}
+                        </li>
+                    ))}
+                </ul>
+                <p>
+                    Total: £
+                    {calculateTotalPrice(basket).toFixed(2)}
+                </p>
+            </div>
+            <button onClick={emptyBasket}>Empty Basket</button>
         </>
     );
-    }
+}
 
 export default ShoppingPage;
